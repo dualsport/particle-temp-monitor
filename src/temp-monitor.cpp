@@ -7,13 +7,10 @@
 // This #include statement was automatically added by the Particle IDE.
 #include <Adafruit_DHT_Particle.h>
 
-// Example testing sketch for various DHT humidity/temperature sensors
-// Written by ladyada, public domain
-
 void setup();
 void loop();
 int current(String unit);
-#line 7 "c:/Users/Conrad/source/Particle/Photon/temp-monitor/src/temp-monitor.ino"
+#line 4 "c:/Users/Conrad/source/Particle/Photon/temp-monitor/src/temp-monitor.ino"
 #define DHTPIN D4     // what pin we're connected to
 
 // Uncomment whatever type you're using!
@@ -41,12 +38,16 @@ time_t current_time;
 time_t next_read;
 
 int attempts = 0;
+int led1 = D7; //onboard led
 
 
 void setup() {
     Particle.publish("status", "start", PRIVATE);
     Particle.function("current_conditions", current);
     dht.begin();
+
+    pinMode(led1, OUTPUT);
+    digitalWrite(led1, LOW);
 
     current_time = Time.now();
     next_read = current_time - (current_time % period) + period;
@@ -57,6 +58,7 @@ void setup() {
 void loop() {
     current_time = Time.now();
     if(current_time >= next_read) {
+        digitalWrite(led1, HIGH);
         // Reading temperature or humidity takes about 250 milliseconds!
         // Sensor readings may also be up to 2 seconds 'old'
         float t_c = dht.getTempCelcius();
@@ -91,6 +93,7 @@ void loop() {
             next_read = current_time - (current_time % period) + period;
             attempts = 0;
         }
+        digitalWrite(led1, LOW);
     }
     // sync time
     if(current_time >= next_sync) {
@@ -108,14 +111,15 @@ void loop() {
 }
 
 int current(String unit) {
-    String result = "Invalid unit given. Allowed units are 'celsius' or 'fahrenheit'.";
-    if (unit == "celsius") {
+    digitalWrite(led1, HIGH);
+    String result = "Invalid unit given. Allowed units are 'c' or 'f' for celsius or fahrenheit.";
+    if (unit == "c") {
         float t_c = dht.getTempCelcius();
         float dp_c = dht.getDewPoint();
         float h = dht.getHumidity();
         result = String::format("{\"Temp_C\": %4.2f, \"DewPt_C\": %4.2f, \"RelHum\": %4.2f}", t_c, dp_c, h);
     }
-    else if (unit == "fahrenheit") {
+    else if (unit == "f") {
         float t_f = dht.getTempFarenheit();
         float dp_c = dht.getDewPoint();
         float dp_f = (dp_c * 9 / 5) + 32;
@@ -123,6 +127,7 @@ int current(String unit) {
         result = String::format("{\"Temp_F\": %4.2f, \"DewPt_F\": %4.2f, \"RelHum\": %4.2f}", t_f, dp_f, h);
     }
     Particle.publish("current_conditions", result, PRIVATE);
+    digitalWrite(led1, LOW);
     return 1;
 }
         
