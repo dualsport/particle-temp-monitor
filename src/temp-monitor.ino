@@ -33,6 +33,7 @@ int led1 = D7; //onboard led
 
 void setup() {
     Particle.publish("status", "start", PRIVATE);
+    Particle.publish("Name", "particle-temp-monitor");
     Particle.function("current_conditions", current);
     dht.begin();
 
